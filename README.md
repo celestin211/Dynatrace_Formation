@@ -1,7 +1,7 @@
 # Connaître Dynatrace en 3 Heures
 
 **OneAgent | Kubernetes | Cloud | Dashboards**  
-**Duree totale : 3 heures | Niveau : Debutant | Format : Distanciel**  
+**Duree totale : 3 heures | Niveau : Debutant |**  
 **Version : 6 mai 2026**
 
 Ce document accompagne la formation Dynatrace et a pour objectif de vous faire monter en competence sur les fonctionnalites essentielles de la plateforme.  
