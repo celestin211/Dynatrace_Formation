@@ -389,16 +389,38 @@ Note : pour une **variable de dashboard** (type Query), Dynatrace refuse souvent
 44. Activer `Allow all values` (option `All`)
 45. Cliquer sur `Save`
 
-Utiliser la variable dans les tiles :
+Utiliser la variable dans les tiles (**uniquement dans le dashboard**, pas ailleurs — voir encadre ci-dessous) :
 
 ```dql
 fetch logs
-| filter service == "{{$service}}"
+| filter service == $service
 | filter loglevel == "ERROR"
 | summarize count()
 ```
 
-Resultat attendu : un menu deroulant apparait en haut du dashboard et filtre tous les tiles qui utilisent `{{$service}}`.
+**Multi-sélection** (variable `service` avec plusieurs valeurs) :
+
+```dql
+fetch logs
+| filter in(service, array($service))
+| filter loglevel == "ERROR"
+| summarize count()
+```
+
+**Contexte d’exécution**
+
+| Contexte | Comportement |
+|---|---|
+| **Tile DQL d’un dashboard** qui a une variable nommée exactement `service` | `$service` est **autorisé** : Dynatrace remplace `$service` par la valeur choisie (stratégie par défaut : guillemets pour une chaîne). |
+| **Logs**, **Notebooks**, **Playground / API DQL** sans variables de dashboard | `$service` est en général **interdit** ou « variable inexistante » → message du type *`$` isn't allowed here* ou *variable broken or does not exist*. Utiliser une valeur littérale, par ex. `filter service == "nom-du-service"`. |
+
+Syntaxe officielle pour les **dashboards** : **`$` + nom de la variable** (ex. `$service` si la variable s’appelle `service`). Ce n’est **pas** la meme chose que `{{$service}}` (autre produit / ancienne habitude).
+
+**Define a value in the referenced variable: service** : aucune valeur sélectionnée ou variable vide — choisir une valeur en haut du dashboard, ou **Variables** → `service` → **valeur par défaut** ; vérifier que la requête de la variable retourne une colonne `service` et que **Run** renvoie des lignes.
+
+**Variable « cassée »** (icône d’avertissement dans *Variables*) : la requête de la variable échoue ou ne retourne pas `service` — corriger la requête `dedup` / `fields` avant d’utiliser `$service` dans les tiles.
+
+Resultat attendu : un menu deroulant apparait en haut du dashboard et filtre tous les tiles qui utilisent `$service`.
 
 ### EXERCICE 5 - Assembler le dashboard complet
 
@@ -406,7 +428,7 @@ Resultat attendu : un menu deroulant apparait en haut du dashboard et filtre tou
 2. Ajouter le tile Single Value : nombre d'erreurs totales
 3. Ajouter le tile Line chart : evolution des erreurs
 4. Ajouter le tile Table : top 5 services en erreur
-5. Creer la variable `$service` et l'integrer dans les 3 requetes
+5. Créer la variable nommée `service` (référence DQL : `$service`) et l'intégrer dans les 3 requêtes des **tiles** du même dashboard
 6. Tester : changer la variable et verifier la mise a jour des tiles
 7. Sauvegarder et partager le lien
 
@@ -439,7 +461,7 @@ Reponses courtes :
 1. Davis AI detecte les anomalies et la cause racine automatiquement.
 2. Utiliser `loglevel == "ERROR"`.
 3. `summarize erreurs = count(), by: {service}` puis `sort erreurs desc` (nommer l’agrégation évite les ambiguïtés sur le nom de colonne).
-4. **Variable** : *Edit* -> *Variables* -> *Query* ; requête **sans** `summarize` (ex. `dedup service`). **Tiles** : filtre `service == "{{$service}}"` puis `summarize` si besoin.
+4. **Variable** : *Edit* -> *Variables* -> *Query* ; requête **sans** `summarize` (ex. `dedup service`). **Tiles du même dashboard** : `service == $service` (ou `in(service, array($service))` en multi-sélection) ; **`$service` ne fonctionne pas dans Logs / Notebooks** (erreur `$` not allowed).
 5. Un Problem est detecte automatiquement par IA ; une alerte de seuil est basee sur une valeur fixe configuree.
 
 ### 6.3 Pour aller plus loin
@@ -502,13 +524,16 @@ fetch logs
 | limit 30
 ```
 
-**5 - Dashboard avec variable**
+**5 - Dashboard avec variable** (tile DQL sur un dashboard qui definit la variable `service` ; ne pas coller tel quel dans **Logs**)
+
 ```dql
 fetch logs
-| filter service == "{{$service}}"
+| filter service == $service
 | filter loglevel == "ERROR"
 | summarize count()
 ```
+
+**Test dans Logs / sans variable** : remplacer `$service` par un nom reel, ex. `filter service == "checkout-service"`.
 
 ### Syntaxe DQL essentielle
 
@@ -531,11 +556,14 @@ fetch logs
 
 | Variable | Usage dans la requete DQL |
 |---|---|
-| `{{$service}}` | Filtre par service selectionne |
-| `{{$env}}` | Filtre par environnement |
-| `{{$interval}}` | Intervalle de groupement temporel |
+| `$service` | Filtre par service : `service == $service` (les guillemets sont ajoutés automatiquement pour une valeur texte) |
+| `$service` (multi) | `in(service, array($service))` |
+| `$env` | Filtre par environnement (même principe avec `==` ou `in(...)`) |
+| `$interval` | Souvent avec `:noquote` si la valeur doit être une durée DQL (ex. `bin(timestamp, $interval:noquote)`) — voir doc Dynatrace *dashboard variables* |
 
 **Attention** : la requête qui **alimente la liste** d’une variable (type *Query*) n’accepte en général **pas** `summarize` / `count()` (*Aggregations aren't allowed here*). Les **tiles** du même dashboard, eux, peuvent utiliser `summarize` normalement.
+
+**Erreur `$` isn't allowed here / variable broken or does not exist** : vous n’êtes pas dans un **tile DQL de dashboard** avec une variable valide, ou le nom ne correspond pas (la variable doit s’appeler exactement comme après le `$`, ici `service`). Tester dans **Logs** avec un filtre litteral au lieu de `$service`.
 
 ---
 

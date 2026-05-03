@@ -395,7 +395,7 @@ def build_presentation(output_path):
             "Lister les dernières erreurs avec contexte",
             "Classer les erreurs par service",
             "Tracer les erreurs par tranche de 5 minutes",
-            "Filtrer dynamiquement avec une variable {{$service}}",
+            "Filtrer dynamiquement avec une variable $service",
         ],
     )
 
