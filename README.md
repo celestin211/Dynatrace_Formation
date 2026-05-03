@@ -258,8 +258,8 @@ fetch logs
 ```dql
 fetch logs
 | filter loglevel == "ERROR"
-| summarize count(), by: {bin(timestamp, 5m)}
-| sort timestamp asc
+| summarize count(), by: { interval = bin(timestamp, 5m) }
+| sort interval asc
 ```
 
 **Requete 5 - Chercher un mot dans les logs**
@@ -342,8 +342,8 @@ fetch logs
 ```dql
 fetch logs
 | filter loglevel == "ERROR"
-| summarize count(), by: {bin(timestamp, 5m)}
-| sort timestamp asc
+| summarize count(), by: { interval = bin(timestamp, 5m) }
+| sort interval asc
 ```
 
 35. Choisir `Line chart`
@@ -374,7 +374,7 @@ Creer une variable `$service` :
 
 ```dql
 fetch logs
-| summarize by: {service}
+| summarize count(), by: {service}
 | fields service
 | sort service
 ```
@@ -482,8 +482,8 @@ fetch logs
 ```dql
 fetch logs
 | filter loglevel == "ERROR"
-| summarize count(), by: {bin(timestamp, 5m)}
-| sort timestamp asc
+| summarize count(), by: { interval = bin(timestamp, 5m) }
+| sort interval asc
 ```
 
 **4 - Recherche par mot-cle**
