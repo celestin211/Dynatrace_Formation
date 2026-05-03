@@ -232,6 +232,8 @@ Remarque : apres `summarize count()` sans `by:`, il ne reste en general plus qu'
 
 Mes 5 premieres requetes DQL :
 
+**Contexte** : dans **Logs / Notebooks / tiles dashboard**, `summarize` et `bin(timestamp, …)` sont en general autorises. Dans une **variable de dashboard** (type *Query*), les agrégations sont souvent **interdites** : utiliser plutot `dedup` (voir section 5.3).
+
 **Requete 1 - Compter les erreurs**
 ```dql
 fetch logs
@@ -252,8 +254,8 @@ fetch logs
 ```dql
 fetch logs
 | filter loglevel == "ERROR"
-| summarize count(), by: {service}
-| sort count() desc
+| summarize erreurs = count(), by: {service}
+| sort erreurs desc
 ```
 
 **Requete 4 - Erreurs dans le temps**
@@ -376,10 +378,13 @@ Creer une variable `$service` :
 
 ```dql
 fetch logs
-| summarize count(), by: {service}
+| filterOut isNull(service)
+| dedup service, sort: { timestamp desc }
 | fields service
 | sort service
 ```
+
+Note : pour une **variable de dashboard** (type Query), Dynatrace refuse souvent les **agrégations** (`summarize`, `count()`, etc.) avec le message du type *Aggregations aren't allowed here*. Dans ce cas, ne pas utiliser `summarize count(), by: {service}` ; preferer `dedup service` pour obtenir une ligne par service sans agrégation.
 
 44. Activer `Allow all values` (option `All`)
 45. Cliquer sur `Save`
@@ -433,8 +438,8 @@ Bonus : ajouter une variable `$env` pour filtrer par environnement (production, 
 Reponses courtes :
 1. Davis AI detecte les anomalies et la cause racine automatiquement.
 2. Utiliser `loglevel == "ERROR"`.
-3. `summarize count(), by: {service}`.
-4. Variables -> Query DQL -> utiliser `{{$nom}}` dans la requete.
+3. `summarize erreurs = count(), by: {service}` puis `sort erreurs desc` (nommer l’agrégation évite les ambiguïtés sur le nom de colonne).
+4. **Variable** : *Edit* -> *Variables* -> *Query* ; requête **sans** `summarize` (ex. `dedup service`). **Tiles** : filtre `service == "{{$service}}"` puis `summarize` si besoin.
 5. Un Problem est detecte automatiquement par IA ; une alerte de seuil est basee sur une valeur fixe configuree.
 
 ### 6.3 Pour aller plus loin
@@ -476,8 +481,8 @@ fetch logs
 ```dql
 fetch logs
 | filter loglevel == "ERROR"
-| summarize count(), by: {service}
-| sort count() desc
+| summarize erreurs = count(), by: {service}
+| sort erreurs desc
 ```
 
 **3 - Evolution dans le temps**
@@ -493,6 +498,7 @@ fetch logs
 fetch logs
 | filter contains(content, "MOT_CLE")
 | fields timestamp, service, content
+| sort timestamp desc
 | limit 30
 ```
 
@@ -515,6 +521,8 @@ fetch logs
 | `\| summarize count()` | Compter le nombre de resultats |
 | `\| summarize avg(value)` | Calculer une moyenne |
 | `\| summarize count(), by: {col}` | Compter par groupe |
+| `\| summarize nom = count(), by: {col}` | Compter par groupe avec colonne de tri explicite (`sort nom desc`) |
+| `\| dedup col, sort: { timestamp desc }` | Une ligne par valeur de `col` sans agrégation (souvent requis pour **variables Query**) |
 | `\| sort col desc` | Trier par colonne decroissante |
 | `\| limit 10` | Limiter a 10 resultats |
 | `\| fields col1, col2` | Selectionner des colonnes |
@@ -526,6 +534,8 @@ fetch logs
 | `{{$service}}` | Filtre par service selectionne |
 | `{{$env}}` | Filtre par environnement |
 | `{{$interval}}` | Intervalle de groupement temporel |
+
+**Attention** : la requête qui **alimente la liste** d’une variable (type *Query*) n’accepte en général **pas** `summarize` / `count()` (*Aggregations aren't allowed here*). Les **tiles** du même dashboard, eux, peuvent utiliser `summarize` normalement.
 
 ---
 
