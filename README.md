@@ -223,10 +223,12 @@ Structure type d'une requete DQL :
 ```dql
 fetch logs
 | filter loglevel == "ERROR"
-| summarize count()
+| fields timestamp, service, content
 | sort timestamp desc
 | limit 10
 ```
+
+Remarque : apres `summarize count()` sans `by:`, il ne reste en general plus qu'une ligne agregee — le champ `timestamp` n'existe plus dans le resultat. Pour trier par temps, faites le `sort` **avant** le `summarize`, ou groupez avec `by: { interval = bin(timestamp, 5m) }` puis triez sur `interval`.
 
 Mes 5 premieres requetes DQL :
 
