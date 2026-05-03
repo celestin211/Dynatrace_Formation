@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-demo
+  namespace: dynatrace-demo
+  labels:
+    app: web-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-demo
+  template:
+    metadata:
+      labels:
+        app: web-demo
+      annotations:
+        oneagent.dynatrace.com/inject: "true"
+        metadata-enrichment.dynatrace.com/inject: "true"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
